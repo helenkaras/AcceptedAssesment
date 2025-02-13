@@ -1,3 +1,8 @@
+using CSharpApp.Application.Categories;
+using CSharpApp.Application.Products;
+using CSharpApp.Core.Dtos;
+using Microsoft.AspNetCore.Mvc;
+
 var builder = WebApplication.CreateBuilder(args);
 
 var logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).CreateLogger();
@@ -11,7 +16,20 @@ builder.Services.AddHttpConfiguration();
 builder.Services.AddProblemDetails();
 builder.Services.AddApiVersioning();
 
+builder.Services.AddHttpClient<IProductsService, ProductsService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["RestApiSettings:BaseUrl"]);
+});
+
+builder.Services.AddHttpClient<ICategoryService, CategoriesService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["RestApiSettings:BaseUrl"]);
+});
+
 var app = builder.Build();
+
+//builder.Services.AddScoped<IProductsService, ProductsService>();
+//builder.Services.AddScoped<ICategoryService, CategoriesService>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -29,6 +47,46 @@ versionedEndpointRouteBuilder.MapGet("api/v{version:apiVersion}/getproducts", as
         return products;
     })
     .WithName("GetProducts")
+.HasApiVersion(1.0);
+
+versionedEndpointRouteBuilder.MapGet("api/v{version:apiVersion}/getproduct/{id}", async (int id, IProductsService productsService) =>
+{
+    var product = await productsService.GetProductById(id);
+    return product is not null ? Results.Ok(product) : Results.NotFound();
+})
+    .WithName("GetProductById")
     .HasApiVersion(1.0);
+
+versionedEndpointRouteBuilder.MapPost("api/v{version:apiVersion}/createproducts", async ([FromBody] Product product, IProductsService productsService) =>
+{
+    var createdProduct = await productsService.CreateProduct(product);
+    return Results.Created($"api/v1/products/{createdProduct.Id}", createdProduct);
+})
+.WithName("CreateProduct")
+.HasApiVersion(1.0);
+
+versionedEndpointRouteBuilder.MapGet("api/v{version:apiVersion}/getcategories", async (ICategoryService categoryService) =>
+{
+    var categories = await categoryService.GetCategories();
+    return categories is not null ? Results.Ok(categories) : Results.NotFound(); ;
+})
+    .WithName("GetCategory")
+.HasApiVersion(1.0);
+
+versionedEndpointRouteBuilder.MapGet("api/v{version:apiVersion}/getcategory/{id}", async (int id, ICategoryService categoryService) =>
+{
+    var category = await categoryService.GetCategoryById(id);
+    return category is not null ? Results.Ok(category) : Results.NotFound();
+})
+    .WithName("GetCategoryById")
+    .HasApiVersion(1.0);
+
+versionedEndpointRouteBuilder.MapPost("api/v{version:apiVersion}/createcategory", async ([FromBody] Category category, ICategoryService categoryService) =>
+{
+    var createdCategory = await categoryService.CreateCategory(category);
+    return Results.Created($"api/v1/products/{createdCategory.Id}", createdCategory);
+})
+.WithName("CreateCategory")
+.HasApiVersion(1.0);
 
 app.Run();

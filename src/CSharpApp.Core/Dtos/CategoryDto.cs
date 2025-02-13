@@ -2,7 +2,7 @@ namespace CSharpApp.Core.Dtos;
 
 public sealed class Category
 {
-    [JsonPropertyName("id")]
+    [JsonPropertyName("Id")]
     public int? Id { get; set; }
 
     [JsonPropertyName("name")]

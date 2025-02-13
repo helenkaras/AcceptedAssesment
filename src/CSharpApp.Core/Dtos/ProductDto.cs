@@ -15,7 +15,7 @@ public sealed class Product
     public string? Description { get; set; }
 
     [JsonPropertyName("images")]
-    public List<string> Images { get; } = [];
+    public List<string>? Images { get; set; } 
 
     [JsonPropertyName("creationAt")]
     public DateTime? CreationAt { get; set; }
@@ -23,6 +23,6 @@ public sealed class Product
     [JsonPropertyName("updatedAt")]
     public DateTime? UpdatedAt { get; set; }
 
-    [JsonPropertyName("category")]
-    public Category? Category { get; set; }
+    [JsonPropertyName("categoryId")]
+    public int? CategoryId { get; set; }
 }
