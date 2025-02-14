@@ -1,3 +1,4 @@
+using CSharpApp.Api.MiddlewareExtension;
 using CSharpApp.Application.Auth;
 using CSharpApp.Application.Categories;
 using CSharpApp.Application.Products;
@@ -40,6 +41,8 @@ builder.Services.AddHttpClient<IAuthService, AuthService>((sp, client) =>
 });
 
 var app = builder.Build();
+
+app.UseRequestPerformance();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
