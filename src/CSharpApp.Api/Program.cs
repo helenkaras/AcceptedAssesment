@@ -1,7 +1,11 @@
+using CSharpApp.Application.Auth;
 using CSharpApp.Application.Categories;
 using CSharpApp.Application.Products;
 using CSharpApp.Core.Dtos;
+using CSharpApp.Core.Settings;
+using CSharpApp.Infrastructure.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,20 +20,26 @@ builder.Services.AddHttpConfiguration();
 builder.Services.AddProblemDetails();
 builder.Services.AddApiVersioning();
 
-builder.Services.AddHttpClient<IProductsService, ProductsService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["RestApiSettings:BaseUrl"]);
-});
 
-builder.Services.AddHttpClient<ICategoryService, CategoriesService>(client =>
+builder.Services.AddHttpClient<IProductsService, ProductsService>((sp, client) =>
 {
+    var settings = sp.GetRequiredService<IOptions<RestApiSettings>>().Value;
+    client.BaseAddress = new Uri(builder.Configuration["RestApiSettings:BaseUrl"]);
+}).AddHttpMessageHandler<AuthHandler>();
+
+builder.Services.AddHttpClient<ICategoryService, CategoriesService>((sp, client) =>
+{
+    var settings = sp.GetRequiredService<IOptions<RestApiSettings>>().Value;
+    client.BaseAddress = new Uri(builder.Configuration["RestApiSettings:BaseUrl"]);
+}).AddHttpMessageHandler<AuthHandler>();
+
+builder.Services.AddHttpClient<IAuthService, AuthService>((sp, client) =>
+{
+    var settings = sp.GetRequiredService<IOptions<RestApiSettings>>().Value;
     client.BaseAddress = new Uri(builder.Configuration["RestApiSettings:BaseUrl"]);
 });
 
 var app = builder.Build();
-
-//builder.Services.AddScoped<IProductsService, ProductsService>();
-//builder.Services.AddScoped<ICategoryService, CategoriesService>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -64,6 +74,7 @@ versionedEndpointRouteBuilder.MapPost("api/v{version:apiVersion}/createproducts"
 })
 .WithName("CreateProduct")
 .HasApiVersion(1.0);
+
 
 versionedEndpointRouteBuilder.MapGet("api/v{version:apiVersion}/getcategories", async (ICategoryService categoryService) =>
 {
